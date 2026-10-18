@@ -70,6 +70,15 @@ jobs:
           cp -r publish/wwwroot/. site/
           echo "${ZF_REF} $(git -C zf rev-parse --short HEAD)" > site/version.txt
 
+      # the files the page loads before anything draws: one missing gives a blank
+      # canvas and a lone 404 in the console, so the run fails here instead
+      - name: Check the site
+        run: |
+          for file in index.html main.js zf.js _framework/dotnet.js fonts/Inter-Regular.ttf; do
+            test -f "site/$file" || { echo "::error::site/$file is missing from the publish"; exit 1; }
+          done
+          find site -type f | sort
+
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site
