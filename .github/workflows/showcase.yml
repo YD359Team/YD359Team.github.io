@@ -78,7 +78,11 @@ jobs:
             test -f "site/$file" || { echo "::error::site/$file is missing from the publish"; exit 1; }
           done
           ls site/main*.js > /dev/null || { echo "::error::main.js is missing from the publish"; exit 1; }
-          grep -q '"imports"' site/index.html || { echo "::error::index.html has no import map"; exit 1; }
+          # the import map is checked where the page asks for one: a ref from before
+          # 0.18 has a plain main.js and no map
+          if grep -q 'type="importmap"' "zf/examples/ZF Wasm/wwwroot/index.html"; then
+            grep -q '"imports"' site/index.html || { echo "::error::index.html has no import map"; exit 1; }
+          fi
           find site -type f | sort
 
       - uses: actions/upload-pages-artifact@v4
