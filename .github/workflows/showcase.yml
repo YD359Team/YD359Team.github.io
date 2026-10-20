@@ -74,9 +74,11 @@ jobs:
       # canvas and a lone 404 in the console, so the run fails here instead
       - name: Check the site
         run: |
-          for file in index.html main.js zf.js _framework/dotnet.js fonts/Inter-Regular.ttf; do
+          for file in index.html zf.js _framework/dotnet.js fonts/Inter-Regular.ttf; do
             test -f "site/$file" || { echo "::error::site/$file is missing from the publish"; exit 1; }
           done
+          ls site/main*.js > /dev/null || { echo "::error::main.js is missing from the publish"; exit 1; }
+          grep -q '"imports"' site/index.html || { echo "::error::index.html has no import map"; exit 1; }
           find site -type f | sort
 
       - uses: actions/upload-pages-artifact@v4
