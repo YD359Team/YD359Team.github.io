@@ -71,17 +71,23 @@ jobs:
           echo "${ZF_REF} $(git -C zf rev-parse --short HEAD)" > site/version.txt
 
       # the files the page loads before anything draws: one missing gives a blank
-      # canvas and a lone 404 in the console, so the run fails here instead
+      # canvas and a lone 404 in the console, so the run fails here instead.
+      # With the import map (0.18 and later) _framework/dotnet.js is published under
+      # its fingerprint, dotnet.<hash>.js, and the map gives the page its plain name
       - name: Check the site
         run: |
-          for file in index.html zf.js _framework/dotnet.js fonts/Inter-Regular.ttf; do
+          for file in index.html zf.js fonts/Inter-Regular.ttf; do
             test -f "site/$file" || { echo "::error::site/$file is missing from the publish"; exit 1; }
           done
           ls site/main*.js > /dev/null || { echo "::error::main.js is missing from the publish"; exit 1; }
+          # dotnet.js itself, plain or fingerprinted — not dotnet.native.* or dotnet.runtime.*
+          ls site/_framework | grep -Eq '^dotnet(\.[a-z0-9]+)?\.js$' \
+            || { echo "::error::_framework/dotnet.js is missing from the publish"; exit 1; }
           # the import map is checked where the page asks for one: a ref from before
           # 0.18 has a plain main.js and no map
           if grep -q 'type="importmap"' "zf/examples/ZF Wasm/wwwroot/index.html"; then
             grep -q '"imports"' site/index.html || { echo "::error::index.html has no import map"; exit 1; }
+            grep -q '_framework/dotnet' site/index.html || { echo "::error::the import map doesn't map _framework/dotnet.js"; exit 1; }
           fi
           find site -type f | sort
 
